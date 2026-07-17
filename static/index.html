@@ -18,53 +18,29 @@
     --navy-900: #16273f;
     --navy-800: #1f3552;
     --navy-700: #2c4a70;
+    --navy-600: #3a5a82;
     --tan-300: #e8cfa9;
     --tan-400: #d9b88f;
     --tan-500: #c29a68;
-    --cream-50: #f7f1e6;
-    --ink: #142032;
-    --ink-soft: #3d4f66;
-    --amber-500: #b5762a;
-    --amber-100: #f2ddc0;
-    --green-600: #3f7a55;
   }
 
   :root {
-    --bg: var(--cream-50);
-    --bg-elevated: #ffffff;
-    --bg-sunken: #efe6d6;
-    --text: var(--ink);
-    --text-soft: var(--ink-soft);
-    --accent: var(--navy-800);
-    --accent-soft: var(--navy-700);
-    --tan: var(--tan-500);
-    --tan-soft: var(--tan-300);
-    --card-border: rgba(20, 32, 50, 0.12);
-    --shadow: 0 8px 24px rgba(15, 27, 45, 0.08);
-    --warn-bg: var(--amber-100);
-    --warn-text: var(--amber-500);
-    --ok-bg: #dcead4;
-    --ok-text: var(--green-600);
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: var(--navy-950);
-      --bg-elevated: var(--navy-900);
-      --bg-sunken: #101d30;
-      --text: #f2e9da;
-      --text-soft: #b8c3d4;
-      --accent: var(--tan-400);
-      --accent-soft: var(--tan-300);
-      --tan: var(--tan-400);
-      --tan-soft: var(--navy-700);
-      --card-border: rgba(232, 207, 169, 0.16);
-      --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      --warn-bg: #3a2c17;
-      --warn-text: #e3ac5f;
-      --ok-bg: #1d3324;
-      --ok-text: #7fbf95;
-    }
+    --bg: var(--navy-950);
+    --bg-elevated: var(--navy-900);
+    --bg-sunken: #101d30;
+    --text: #f2e9da;
+    --text-soft: #b8c3d4;
+    --text-dim: #7d8ba0;
+    --accent: var(--tan-400);
+    --accent-soft: var(--tan-300);
+    --tan: var(--tan-400);
+    --tan-soft: var(--navy-700);
+    --card-border: rgba(232, 207, 169, 0.16);
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --warn-bg: #3a2c17;
+    --warn-text: #e3ac5f;
+    --ok-bg: #1d3324;
+    --ok-text: #7fbf95;
   }
 
   * { box-sizing: border-box; }
@@ -148,7 +124,6 @@
     padding: 8px 14px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;
   }
   .tabs button.active { background: var(--accent); color: var(--bg); }
-  @media (prefers-color-scheme: dark) { .tabs button.active { color: var(--navy-950); } }
 
   main {
     flex: 1; max-width: 920px; margin: 0 auto; width: 100%;
@@ -185,7 +160,6 @@
     font-size: 0.9rem; border: 1px solid transparent;
   }
   .btn-primary { background: var(--accent); color: var(--bg); }
-  @media (prefers-color-scheme: dark) { .btn-primary { color: var(--navy-950); } }
   .btn-ghost { background: transparent; border-color: var(--card-border); color: var(--text); }
   .btn-sm { padding: 6px 12px; font-size: 0.82rem; }
   .btn-danger { background: transparent; border-color: var(--warn-text); color: var(--warn-text); }
@@ -204,12 +178,20 @@
 
   .empty { color: var(--text-soft); font-size: 0.9rem; padding: 20px 0; text-align: center; }
 
-  /* hole entry */
-  .hole-row { display: grid; grid-template-columns: 44px repeat(4, 1fr) auto; gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--card-border); }
-  .hole-row:last-child { border-bottom: none; }
-  .hole-num { font-weight: 700; font-family: ui-monospace, monospace; }
-  .hole-row input[type="number"] { width: 100%; padding: 7px 8px; border-radius: 7px; border: 1px solid var(--card-border); background: var(--bg); color: var(--text); }
-  .hole-toggles { display: flex; gap: 6px; }
+  /* ---- mode application : sous-onglets Infos/Saisie/Résumé ---- */
+  .subtabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .subtabs button {
+    flex: 1; appearance: none; background: transparent; border: 1.5px solid var(--navy-700);
+    color: var(--text-dim); font: inherit; font-size: 0.85rem; font-weight: 600;
+    padding: 11px 6px; border-radius: 20px; cursor: pointer; transition: all .15s ease;
+  }
+  .subtabs button.active {
+    background: var(--tan); color: var(--navy-950); border-color: var(--tan);
+    box-shadow: 0 0 0 1px var(--tan), 0 0 18px rgba(217, 184, 143, 0.5);
+  }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
   .toggle-chip {
     border: 1px solid var(--card-border); background: var(--bg); color: var(--text-soft);
     padding: 6px 9px; border-radius: 7px; font-size: 0.76rem; font-weight: 700; white-space: nowrap;
@@ -217,7 +199,98 @@
   .toggle-chip.on.bunker { background: var(--warn-bg); color: var(--warn-text); border-color: transparent; }
   .toggle-chip.on.approach { background: var(--tan-soft); color: var(--accent); border-color: transparent; }
   .toggle-chip.on.gir { background: var(--ok-bg); color: var(--ok-text); border-color: transparent; }
-  .hole-labels { display: grid; grid-template-columns: 44px repeat(4, 1fr) auto; gap: 8px; font-size: 0.72rem; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.03em; padding-bottom: 6px; border-bottom: 1px solid var(--card-border); }
+  .chip-row { display: flex; gap: 8px; }
+
+  .club-card {
+    background: var(--bg-elevated); border: 1px solid var(--tan-500); border-radius: 16px;
+    padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+  }
+  .club-card-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--tan); font-weight: 700; }
+  .club-card-main { text-align: right; }
+  .club-name { font-size: 1.2rem; font-weight: 800; color: var(--accent-soft); }
+  .club-suggest-dist { font-size: 0.72rem; color: var(--text-dim); }
+
+  .note-area {
+    width: 100%; min-height: 74px; margin-top: 4px; background: var(--bg-elevated);
+    border: 1px solid var(--card-border); border-radius: 16px; padding: 12px 14px;
+    color: var(--text); font: inherit; font-size: 0.85rem; line-height: 1.4; resize: none;
+  }
+  .note-area:focus { outline: none; border-color: var(--navy-600); }
+  .note-area::placeholder { color: var(--text-dim); }
+
+  .score-readout {
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    background: var(--bg-elevated); border: 1px solid var(--card-border); border-radius: 20px;
+    padding: 18px; margin-bottom: 16px;
+  }
+  .score-readout .num { font-size: 2.4rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+  .score-readout .label { font-size: 0.8rem; font-weight: 700; padding: 5px 12px; border-radius: 999px; }
+  .score-readout.ok .num, .score-readout.ok .label { color: var(--ok-text); }
+  .score-readout.ok .label { background: var(--ok-bg); }
+  .score-readout.warn .num, .score-readout.warn .label { color: var(--warn-text); }
+  .score-readout.warn .label { background: var(--warn-bg); }
+  .score-readout.flat .num { color: var(--text); }
+  .score-readout.flat .label { color: var(--text-soft); background: var(--bg-sunken); }
+  .score-readout .hint { font-size: 0.68rem; color: var(--text-dim); margin-top: 2px; }
+
+  .stepper.lg { display: flex; align-items: center; gap: 10px; }
+  .stepper.lg button {
+    width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--navy-700);
+    background: var(--bg-sunken); color: var(--text); font-size: 1.2rem; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    user-select: none; touch-action: manipulation;
+  }
+  .stepper.lg .val { min-width: 44px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; font-size: 1rem; }
+
+  .stepper-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+  .stepper-row + .stepper-row { border-top: 1px solid var(--card-border); }
+  .stepper-row .name { font-size: 0.88rem; color: var(--text-soft); }
+
+  .shot-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  .shot-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--bg-elevated); border: 1px solid var(--card-border); border-radius: 14px; padding: 10px 14px;
+  }
+  .shot-row .shot-label { font-size: 0.82rem; color: var(--text-soft); font-weight: 600; }
+
+  .hole-nav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 15;
+    background: linear-gradient(180deg, transparent, var(--bg) 22%);
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom));
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+  }
+  .hole-nav-inner { max-width: 920px; margin: 0 auto; }
+  .distance-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .distance-bar .track { flex: 1; height: 4px; background: var(--navy-700); border-radius: 2px; position: relative; }
+  .distance-bar .fill { position: absolute; left: 0; top: 0; height: 100%; background: var(--tan); border-radius: 2px; }
+  .distance-bar .ball {
+    position: absolute; top: 50%; width: 9px; height: 9px; border-radius: 50%;
+    background: var(--tan-300); transform: translate(-50%, -50%); box-shadow: 0 0 0 3px rgba(217,184,143,0.2);
+  }
+  .distance-bar .num { font-size: 0.9rem; font-weight: 700; font-variant-numeric: tabular-nums; min-width: 52px; }
+  .distance-bar svg { width: 16px; height: 16px; color: var(--tan); flex-shrink: 0; }
+
+  .navigator { display: flex; align-items: center; justify-content: center; gap: 18px; }
+  .nav-badge {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--navy-700); background: var(--bg-elevated);
+  }
+  .nav-badge .n { font-weight: 700; font-size: 0.95rem; font-variant-numeric: tabular-nums; }
+  .nav-badge .l { font-size: 0.55rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: .03em; }
+  .nav-arrow { background: none; border: none; color: var(--text-soft); padding: 10px; cursor: pointer; }
+  .nav-arrow[disabled] { opacity: 0.25; cursor: default; }
+  .nav-arrow svg { width: 20px; height: 20px; display: block; }
+  .hole-center { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .hole-center svg { width: 14px; height: 14px; color: var(--tan); }
+  .hole-btn {
+    width: 60px; height: 60px; border-radius: 50%; background: var(--tan); color: var(--navy-950);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; font-weight: 800; font-variant-numeric: tabular-nums;
+    box-shadow: 0 6px 18px rgba(217,184,143,0.35);
+  }
+
+  #play-active { padding-bottom: 150px; }
 
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
   .stat-tile { background: var(--bg-elevated); border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; box-shadow: var(--shadow); }
@@ -227,12 +300,6 @@
   canvas { max-width: 100%; }
 
   .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap; }
-
-  @media (max-width: 640px) {
-    .hole-row, .hole-labels { grid-template-columns: 32px repeat(4, 1fr); }
-    .hole-row > .hole-toggles { grid-column: 1 / -1; }
-    .hole-labels > span:last-child { display: none; }
-  }
 </style>
 </head>
 <body>
@@ -256,6 +323,7 @@
         <button data-view="history">Historique</button>
         <button data-view="stats">Stats</button>
         <button data-view="courses">Parcours</button>
+        <button data-view="settings">Réglages</button>
       </div>
     </nav>
   </header>
@@ -294,11 +362,113 @@
           </div>
           <button class="btn btn-ghost btn-sm" onclick="finishRound()">Terminer la partie</button>
         </div>
-        <div class="card">
-          <div class="hole-labels">
-            <span>Trou</span><span>Score</span><span>Putts</span><span>Drive (m)</span><span>Restant (m)</span><span>Détails</span>
+
+        <div class="subtabs">
+          <button class="subtab-btn active" data-panel="infos">Infos</button>
+          <button class="subtab-btn" data-panel="saisie">Saisie</button>
+          <button class="subtab-btn" data-panel="resume">Résumé</button>
+        </div>
+
+        <div class="panel active" id="hole-panel-infos">
+          <div class="stat-grid" style="grid-template-columns: repeat(3, 1fr);">
+            <div class="stat-tile"><div class="label">Par</div><div class="value" id="hi-par">–</div></div>
+            <div class="stat-tile"><div class="label">Index</div><div class="value" id="hi-idx">–</div></div>
+            <div class="stat-tile"><div class="label">Distance</div><div class="value" id="hi-dist">–</div></div>
           </div>
-          <div id="holes-container"></div>
+
+          <div class="club-card">
+            <div class="club-card-label">Club suggéré</div>
+            <div class="club-card-main">
+              <div class="club-name" id="hi-club-name">–</div>
+              <div class="club-suggest-dist" id="hi-club-dist"></div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Note perso</label>
+            <textarea class="note-area" id="hi-note" placeholder="Ex. bunker à gauche du green, viser centre-droit..." oninput="onNoteChange()"></textarea>
+          </div>
+        </div>
+
+        <div class="panel" id="hole-panel-saisie">
+          <div class="score-readout" id="score-readout">
+            <div>
+              <div class="num" id="sr-num">–</div>
+              <div class="hint">coups + putts</div>
+            </div>
+            <div class="label" id="sr-label"></div>
+          </div>
+
+          <div class="card">
+            <div class="stepper-row">
+              <div class="name">Nombre de coups avant le green</div>
+              <div class="stepper lg">
+                <button id="shotcount-minus">–</button>
+                <div class="val" id="shotcount-val">1</div>
+                <button id="shotcount-plus">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="shot-list" id="shot-list"></div>
+
+          <div class="card">
+            <div class="stepper-row">
+              <div class="name">Putts</div>
+              <div class="stepper lg">
+                <button id="putts-minus">–</button>
+                <div class="val" id="putts-val">0</div>
+                <button id="putts-plus">+</button>
+              </div>
+            </div>
+            <div class="stepper-row">
+              <div class="name">Distance du 1er putt</div>
+              <div class="stepper lg">
+                <button id="puttdist-minus">–</button>
+                <div class="val" id="puttdist-val">0 m</div>
+                <button id="puttdist-plus">+</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="chip-row">
+            <button type="button" class="toggle-chip bunker" id="chip-bunker" onclick="toggleChip('bunker')">Bunker</button>
+            <button type="button" class="toggle-chip approach" id="chip-approach" onclick="toggleChip('approach')">Approche</button>
+            <button type="button" class="toggle-chip gir" id="chip-green" onclick="toggleChip('putt_sur_green')">Green</button>
+          </div>
+        </div>
+
+        <div class="panel" id="hole-panel-resume">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Trou</th><th>Par</th><th>Score</th><th>Écart</th></tr></thead>
+              <tbody id="resume-rows"></tbody>
+            </table>
+          </div>
+          <div class="card" style="margin-top:12px; display:flex; justify-content:space-between; align-items:center;">
+            <span>Score cumulé</span>
+            <span class="mono" id="resume-total" style="font-size:1.2rem; font-weight:700;">–</span>
+          </div>
+        </div>
+
+        <div class="hole-nav-bar">
+          <div class="hole-nav-inner">
+            <div class="distance-bar">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3v18M6 4h9l-2.5 3L15 10H6"/></svg>
+              <div class="num" id="hn-dist">–</div>
+              <div class="track"><div class="fill" id="hn-fill"></div><div class="ball" id="hn-ball"></div></div>
+            </div>
+            <div class="navigator">
+              <div class="nav-badge"><div class="n" id="hn-par">–</div><div class="l">Par</div></div>
+              <button class="nav-arrow" id="hn-prev" onclick="changeHole(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg></button>
+              <div class="hole-center">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 3v18M6 4h9l-2.5 3L15 10H6"/></svg>
+                <div class="hole-btn" id="hn-num">–</div>
+              </div>
+              <button class="nav-arrow" id="hn-next" onclick="changeHole(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg></button>
+              <div class="nav-badge"><div class="n" id="hn-idx">–</div><div class="l">Idx</div></div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -365,6 +535,32 @@
         </table>
       </div>
     </section>
+
+    <!-- SETTINGS -->
+    <section class="view" id="view-settings">
+      <h2>Réglages</h2>
+      <p class="lede">Tes distances de canne — utilisées pour suggérer un club selon la distance restante.</p>
+      <div class="card">
+        <div class="row">
+          <div class="field">
+            <label for="club-name">Club</label>
+            <input id="club-name" type="text" placeholder="Ex. Fer 7" />
+          </div>
+          <div class="field">
+            <label for="club-distance">Distance (m)</label>
+            <input id="club-distance" type="number" min="0" placeholder="120" />
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="createClub()">Ajouter le club</button>
+      </div>
+      <div class="table-wrap">
+        <table id="clubs-table">
+          <thead><tr><th>Club</th><th>Distance</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="empty" id="clubs-empty" style="display:none;">Aucun club enregistré pour l'instant.</div>
+    </section>
   </main>
 </div>
 
@@ -414,6 +610,17 @@
       if (btn.dataset.view === "history") loadHistory();
       if (btn.dataset.view === "stats") loadStats();
       if (btn.dataset.view === "courses") loadCourses();
+      if (btn.dataset.view === "settings") loadClubs();
+    });
+  });
+
+  // ---- sous-onglets Infos/Saisie/Résumé (mode application) ----
+  document.querySelectorAll(".subtab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".subtab-btn").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll("#play-active .panel").forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("hole-panel-" + btn.dataset.panel).classList.add("active");
     });
   });
 
@@ -536,79 +743,311 @@
   async function openRound(id) {
     state.activeRoundId = id;
     state.activeRound = await api("/api/rounds/" + id);
+    state.currentHole = 1;
+    state.workingEntries = {};
+    (state.activeRound.entries || []).forEach((e) => {
+      state.workingEntries[e.hole_number] = {
+        putts: e.putts ?? 0,
+        putt_distance: e.putt_distance ?? 0,
+        shots: e.shots && e.shots.length ? e.shots.map((d) => d ?? 0) : [0],
+        bunker: !!e.bunker,
+        approach: !!e.approach,
+        putt_sur_green: !!e.putt_sur_green,
+      };
+    });
+    if (!state.clubs) await loadClubs();
     document.getElementById("play-setup").style.display = "none";
     document.getElementById("play-active").style.display = "block";
     document.getElementById("active-round-title").textContent = state.activeRound.course_name;
     document.getElementById("active-round-sub").textContent = state.activeRound.played_on;
-    renderHoles();
+    renderHole();
   }
 
-  function renderHoles() {
-    const round = state.activeRound;
-    const existing = {};
-    (round.entries || []).forEach((h) => (existing[h.hole_number] = h));
-    const container = document.getElementById("holes-container");
-    container.innerHTML = "";
-    for (let i = 1; i <= round.holes_count; i++) {
-      const holeInfo = round.holes[i - 1] || { par: 4, hole_index: null };
-      const par = holeInfo.par;
-      const refDistance = round.tee_distances ? round.tee_distances[i] : null;
-      const h = existing[i] || { par, score: par, putts: "", drive_distance: "", remaining_distance: "", bunker: 0, approach: 0, putt_sur_green: 0 };
-      const row = document.createElement("div");
-      row.className = "hole-row";
-      row.innerHTML = `
-        <div class="hole-num">${i}<div style="font-size:0.65rem; color:var(--text-soft); font-weight:400;">par ${par}${holeInfo.hole_index ? " · idx " + holeInfo.hole_index : ""}${refDistance ? " · " + refDistance + "m" : ""}</div></div>
-        <input type="number" min="1" value="${h.score}" id="score-${i}">
-        <input type="number" min="0" value="${h.putts ?? ""}" id="putts-${i}">
-        <input type="number" min="0" value="${h.drive_distance ?? ""}" id="drive-${i}" data-ref="${refDistance ?? ""}">
-        <input type="number" min="0" value="${h.remaining_distance ?? ""}" id="remain-${i}">
-        <div class="hole-toggles">
-          <button type="button" class="toggle-chip bunker ${h.bunker ? "on" : ""}" data-hole="${i}" data-field="bunker" onclick="toggleChip(this)">Bunker</button>
-          <button type="button" class="toggle-chip approach ${h.approach ? "on" : ""}" data-hole="${i}" data-field="approach" onclick="toggleChip(this)">Approche</button>
-          <button type="button" class="toggle-chip gir ${h.putt_sur_green ? "on" : ""}" data-hole="${i}" data-field="putt_sur_green" onclick="toggleChip(this)">Green</button>
-        </div>
-      `;
-      container.appendChild(row);
-      document.getElementById("drive-" + i).addEventListener("change", () => {
-        const driveEl = document.getElementById("drive-" + i);
-        const ref = driveEl.dataset.ref ? parseInt(driveEl.dataset.ref, 10) : null;
-        const driveVal = driveEl.value ? parseInt(driveEl.value, 10) : null;
-        if (ref != null && driveVal != null) {
-          document.getElementById("remain-" + i).value = Math.max(0, ref - driveVal);
-        }
-        saveHole(i);
-      });
-      ["score", "putts", "remain"].forEach((f) => {
-        document.getElementById(f + "-" + i).addEventListener("change", () => saveHole(i));
-      });
+  function holeInfo(n) {
+    return state.activeRound.holes[n - 1] || { par: 4, hole_index: null };
+  }
+
+  function refDistance(n) {
+    return state.activeRound.tee_distances ? state.activeRound.tee_distances[n] : null;
+  }
+
+  function entry(n) {
+    n = n ?? state.currentHole;
+    if (!state.workingEntries[n]) {
+      state.workingEntries[n] = { putts: 0, putt_distance: 0, shots: [0], bunker: false, approach: false, putt_sur_green: false };
+    }
+    return state.workingEntries[n];
+  }
+
+  function computeScore(e) {
+    return e.shots.length + (e.putts || 0);
+  }
+
+  function scoreLabel(par, score) {
+    if (score === 1) return "Trou en un";
+    const diff = score - par;
+    if (diff <= -2) return "Aigle";
+    if (diff === -1) return "Birdie";
+    if (diff === 0) return "Par";
+    if (diff === 1) return "Bogey";
+    return "Double bogey";
+  }
+
+  function suggestClub(targetDist) {
+    if (!state.clubs || !state.clubs.length) return null;
+    return state.clubs.reduce((best, c) => (Math.abs(c.distance - targetDist) < Math.abs(best.distance - targetDist) ? c : best));
+  }
+
+  // appui long = répétition accélérée
+  function bindHold(el, fn) {
+    let interval, timeout;
+    const start = (ev) => {
+      ev.preventDefault();
+      fn();
+      timeout = setTimeout(() => { interval = setInterval(fn, 90); }, 380);
+    };
+    const stop = () => { clearTimeout(timeout); clearInterval(interval); };
+    el.addEventListener("mousedown", start);
+    el.addEventListener("touchstart", start, { passive: false });
+    ["mouseup", "mouseleave", "touchend", "touchcancel"].forEach((ev) => el.addEventListener(ev, stop));
+  }
+
+  function toggleChip(field) {
+    const e = entry();
+    e[field] = !e[field];
+    document.getElementById("chip-" + (field === "putt_sur_green" ? "green" : field)).classList.toggle("on", e[field]);
+    saveHole();
+  }
+
+  function stepShotCount(delta) {
+    const e = entry();
+    if (delta > 0) {
+      e.shots.push(e.shots[e.shots.length - 1] || 0);
+    } else if (e.shots.length > 1) {
+      e.shots.pop();
+    }
+    document.getElementById("shotcount-val").textContent = e.shots.length;
+    renderShotList();
+    renderScoreReadout();
+    renderNavBar();
+    renderClubSuggestion();
+    saveHole();
+  }
+
+  function stepShotDistance(i, delta) {
+    const e = entry();
+    e.shots[i] = Math.max(0, (e.shots[i] || 0) + delta);
+    document.querySelectorAll(`.shot-row [data-shot="${i}"]`).forEach((el) => (el.textContent = e.shots[i] + " m"));
+    renderNavBar();
+    renderClubSuggestion();
+    saveHole();
+  }
+
+  function stepPutts(delta) {
+    const e = entry();
+    e.putts = Math.max(0, (e.putts || 0) + delta);
+    document.getElementById("putts-val").textContent = e.putts;
+    renderScoreReadout();
+    saveHole();
+  }
+
+  function stepPuttDist(delta) {
+    const e = entry();
+    e.putt_distance = Math.max(0, (e.putt_distance || 0) + delta);
+    document.getElementById("puttdist-val").textContent = e.putt_distance + " m";
+    saveHole();
+  }
+
+  function onNoteChange() {
+    const note = document.getElementById("hi-note").value;
+    state.activeRound.notes[state.currentHole] = note;
+    api(`/api/courses/${state.activeRound.course_id}/notes/${state.currentHole}`, {
+      method: "PUT",
+      body: JSON.stringify({ note }),
+    });
+  }
+
+  function renderShotList() {
+    const e = entry();
+    const wrap = document.getElementById("shot-list");
+    wrap.innerHTML = e.shots
+      .map(
+        (dist, i) => `
+        <div class="shot-row">
+          <div class="shot-label">Coup ${i + 1}${i === 0 ? " (départ)" : ""}</div>
+          <div class="stepper lg">
+            <button class="shot-minus" data-i="${i}">–</button>
+            <div class="val" data-shot="${i}">${dist} m</div>
+            <button class="shot-plus" data-i="${i}">+</button>
+          </div>
+        </div>`
+      )
+      .join("");
+    wrap.querySelectorAll(".shot-minus").forEach((btn) => bindHold(btn, () => stepShotDistance(parseInt(btn.dataset.i, 10), -5)));
+    wrap.querySelectorAll(".shot-plus").forEach((btn) => bindHold(btn, () => stepShotDistance(parseInt(btn.dataset.i, 10), 5)));
+  }
+
+  function renderScoreReadout() {
+    const h = holeInfo(state.currentHole);
+    const e = entry();
+    const score = computeScore(e);
+    const diff = score - h.par;
+    const cls = diff < 0 ? "ok" : diff > 0 ? "warn" : "flat";
+    document.getElementById("score-readout").className = "score-readout " + cls;
+    document.getElementById("sr-num").textContent = score;
+    document.getElementById("sr-label").textContent = scoreLabel(h.par, score);
+  }
+
+  function renderClubSuggestion() {
+    const h = holeInfo(state.currentHole);
+    const e = entry();
+    const dist = refDistance(state.currentHole);
+    const lastShot = e.shots[e.shots.length - 1];
+    const target = lastShot > 0 ? lastShot : dist;
+    const club = suggestClub(target);
+    document.getElementById("hi-club-name").textContent = club ? club.name : "–";
+    document.getElementById("hi-club-dist").textContent = target ? "pour " + target + " m" : (club ? "" : "ajoute tes clubs dans Réglages");
+  }
+
+  function renderNavBar() {
+    const h = holeInfo(state.currentHole);
+    const e = entry();
+    const dist = refDistance(state.currentHole);
+    document.getElementById("hn-par").textContent = h.par;
+    document.getElementById("hn-idx").textContent = h.hole_index ?? "–";
+    document.getElementById("hn-num").textContent = state.currentHole;
+    document.getElementById("hn-prev").disabled = state.currentHole === 1;
+    document.getElementById("hn-next").disabled = state.currentHole === state.activeRound.holes_count;
+
+    const lastShot = e.shots[e.shots.length - 1];
+    if (dist) {
+      const pct = Math.max(0, Math.min(100, 100 - ((lastShot || dist) / dist) * 100));
+      document.getElementById("hn-fill").style.width = pct + "%";
+      document.getElementById("hn-ball").style.left = pct + "%";
+      document.getElementById("hn-dist").textContent = (lastShot > 0 ? lastShot : dist) + "m";
+    } else {
+      document.getElementById("hn-fill").style.width = "0%";
+      document.getElementById("hn-ball").style.left = "0%";
+      document.getElementById("hn-dist").textContent = lastShot > 0 ? lastShot + "m" : "–";
     }
   }
 
-  function toggleChip(btn) {
-    btn.classList.toggle("on");
-    saveHole(parseInt(btn.dataset.hole, 10));
+  function renderResume() {
+    const round = state.activeRound;
+    let total = 0, playedCount = 0;
+    const rows = [];
+    for (let i = 1; i <= round.holes_count; i++) {
+      const h = holeInfo(i);
+      const we = state.workingEntries[i];
+      const score = we ? computeScore(we) : null;
+      if (score != null) { total += score; playedCount++; }
+      const diff = score != null ? score - h.par : null;
+      let pillHtml = "–";
+      if (diff !== null) {
+        const cls = diff < 0 ? "pill-ok" : diff > 0 ? "pill-warn" : "pill-neutral";
+        const label = diff === 0 ? "PAR" : diff > 0 ? "+" + diff : String(diff);
+        pillHtml = `<span class="pill ${cls}">${label}</span>`;
+      }
+      rows.push(`<tr><td class="mono">${i}</td><td>${h.par}</td><td class="mono">${score ?? "–"}</td><td>${pillHtml}</td></tr>`);
+    }
+    document.getElementById("resume-rows").innerHTML = rows.join("");
+    document.getElementById("resume-total").textContent = playedCount ? total : "–";
   }
 
-  async function saveHole(i) {
-    const par = state.activeRound.holes[i - 1].par;
-    const body = {
-      par,
-      score: parseInt(document.getElementById("score-" + i).value, 10) || par,
-      putts: document.getElementById("putts-" + i).value ? parseInt(document.getElementById("putts-" + i).value, 10) : null,
-      drive_distance: document.getElementById("drive-" + i).value ? parseInt(document.getElementById("drive-" + i).value, 10) : null,
-      remaining_distance: document.getElementById("remain-" + i).value ? parseInt(document.getElementById("remain-" + i).value, 10) : null,
-      bunker: document.querySelector(`.toggle-chip[data-field="bunker"][data-hole="${i}"]`).classList.contains("on"),
-      approach: document.querySelector(`.toggle-chip[data-field="approach"][data-hole="${i}"]`).classList.contains("on"),
-      putt_sur_green: document.querySelector(`.toggle-chip[data-field="putt_sur_green"][data-hole="${i}"]`).classList.contains("on"),
-    };
-    await api(`/api/rounds/${state.activeRoundId}/holes/${i}`, { method: "PUT", body: JSON.stringify(body) });
+  function renderHole() {
+    const h = holeInfo(state.currentHole);
+    const e = entry();
+    const dist = refDistance(state.currentHole);
+
+    document.getElementById("hi-par").textContent = h.par;
+    document.getElementById("hi-idx").textContent = h.hole_index ?? "–";
+    document.getElementById("hi-dist").textContent = dist ? dist + " m" : "–";
+    document.getElementById("hi-note").value = (state.activeRound.notes && state.activeRound.notes[state.currentHole]) || "";
+
+    document.getElementById("shotcount-val").textContent = e.shots.length;
+    document.getElementById("putts-val").textContent = e.putts ?? 0;
+    document.getElementById("puttdist-val").textContent = (e.putt_distance ?? 0) + " m";
+    document.getElementById("chip-bunker").classList.toggle("on", !!e.bunker);
+    document.getElementById("chip-approach").classList.toggle("on", !!e.approach);
+    document.getElementById("chip-green").classList.toggle("on", !!e.putt_sur_green);
+
+    renderShotList();
+    renderScoreReadout();
+    renderClubSuggestion();
+    renderNavBar();
+    renderResume();
+  }
+
+  function changeHole(delta) {
+    const next = state.currentHole + delta;
+    if (next < 1 || next > state.activeRound.holes_count) return;
+    state.currentHole = next;
+    renderHole();
+  }
+
+  bindHold(document.getElementById("shotcount-minus"), () => stepShotCount(-1));
+  bindHold(document.getElementById("shotcount-plus"), () => stepShotCount(1));
+  bindHold(document.getElementById("putts-minus"), () => stepPutts(-1));
+  bindHold(document.getElementById("putts-plus"), () => stepPutts(1));
+  bindHold(document.getElementById("puttdist-minus"), () => stepPuttDist(-1));
+  bindHold(document.getElementById("puttdist-plus"), () => stepPuttDist(1));
+
+  async function saveHole() {
+    const n = state.currentHole;
+    const e = entry(n);
+    const par = holeInfo(n).par;
+    const { score } = await api(`/api/rounds/${state.activeRoundId}/holes/${n}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        par,
+        putts: e.putts,
+        putt_distance: e.putt_distance,
+        shots: e.shots,
+        bunker: e.bunker,
+        approach: e.approach,
+        putt_sur_green: e.putt_sur_green,
+      }),
+    });
+    renderResume();
   }
 
   function finishRound() {
     state.activeRoundId = null;
     state.activeRound = null;
+    state.workingEntries = {};
     document.getElementById("play-active").style.display = "none";
     document.getElementById("play-setup").style.display = "block";
+  }
+
+  // ---- clubs (réglages) ----
+  async function loadClubs() {
+    state.clubs = await api("/api/clubs");
+    const tbody = document.querySelector("#clubs-table tbody");
+    if (tbody) {
+      document.getElementById("clubs-empty").style.display = state.clubs.length ? "none" : "block";
+      tbody.innerHTML = state.clubs
+        .map(
+          (c) =>
+            `<tr><td>${escapeHtml(c.name)}</td><td class="mono">${c.distance} m</td><td><button class="btn btn-ghost btn-sm" onclick="deleteClub(${c.id})">Suppr.</button></td></tr>`
+        )
+        .join("");
+    }
+  }
+
+  async function createClub() {
+    const name = document.getElementById("club-name").value.trim();
+    const distance = document.getElementById("club-distance").value;
+    if (!name || !distance) return alert("Nom et distance requis");
+    await api("/api/clubs", { method: "POST", body: JSON.stringify({ name, distance: parseInt(distance, 10) }) });
+    document.getElementById("club-name").value = "";
+    document.getElementById("club-distance").value = "";
+    await loadClubs();
+  }
+
+  async function deleteClub(id) {
+    if (!confirm("Supprimer ce club ?")) return;
+    await api("/api/clubs/" + id, { method: "DELETE" });
+    await loadClubs();
   }
 
   // ---- history ----
@@ -653,8 +1092,8 @@
     const tiles = document.getElementById("stat-tiles");
     document.getElementById("stats-empty").style.display = a.holes_total ? "none" : "block";
     tiles.innerHTML = `
-      <div class="stat-tile"><div class="label">Drive moyen</div><div class="value">${fmt(a.avg_drive)} m</div></div>
-      <div class="stat-tile"><div class="label">Reste moyen après drive</div><div class="value">${fmt(a.avg_remaining)} m</div></div>
+      <div class="stat-tile"><div class="label">Distance restante (départ)</div><div class="value">${fmt(a.avg_first_shot_remaining)} m</div></div>
+      <div class="stat-tile"><div class="label">Distance moyenne du putt</div><div class="value">${fmt(a.avg_putt_distance)} m</div></div>
       <div class="stat-tile"><div class="label">Putts moyens / trou</div><div class="value">${fmt(a.avg_putts, 1)}</div></div>
       <div class="stat-tile"><div class="label">% Bunker</div><div class="value">${pct(a.bunker_count, a.holes_total)}</div></div>
       <div class="stat-tile"><div class="label">% Approche</div><div class="value">${pct(a.approach_count, a.holes_total)}</div></div>
@@ -735,6 +1174,7 @@
   async function boot() {
     renderScorecardTable();
     document.getElementById("round-date").value = new Date().toISOString().slice(0, 10);
+    await loadClubs();
     await loadCourses();
     await refreshCourseSelect();
   }
