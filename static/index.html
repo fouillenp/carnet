@@ -2,8 +2,16 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Carnet</title>
+<link rel="manifest" href="/manifest.json" />
+<link rel="apple-touch-icon" href="/icons/icon-180.png" />
+<link rel="icon" href="/icons/icon-192.png" type="image/png" />
+<meta name="theme-color" content="#16273f" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Carnet" />
 <style>
   :root {
     --navy-950: #0f1b2d;
@@ -81,7 +89,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 24px;
+    padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
   }
   .login-card {
     background: var(--bg-elevated);
@@ -119,11 +127,14 @@
     z-index: 10;
     background: var(--bg-elevated);
     border-bottom: 1px solid var(--card-border);
+    padding-top: env(safe-area-inset-top);
   }
   nav {
     max-width: 920px;
     margin: 0 auto;
     padding: 12px 20px;
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -139,7 +150,12 @@
   .tabs button.active { background: var(--accent); color: var(--bg); }
   @media (prefers-color-scheme: dark) { .tabs button.active { color: var(--navy-950); } }
 
-  main { flex: 1; max-width: 920px; margin: 0 auto; padding: 24px 20px 60px; width: 100%; }
+  main {
+    flex: 1; max-width: 920px; margin: 0 auto; width: 100%;
+    padding: 24px 20px calc(60px + env(safe-area-inset-bottom));
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+  }
   .view { display: none; }
   .view.active { display: block; }
 

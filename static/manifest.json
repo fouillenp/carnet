@@ -1,0 +1,15 @@
+{
+  "name": "Carnet",
+  "short_name": "Carnet",
+  "description": "Suivi détaillé de scores de golf",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#16273f",
+  "theme_color": "#16273f",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
