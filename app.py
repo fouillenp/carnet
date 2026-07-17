@@ -130,6 +130,15 @@ def create_course():
     return jsonify({"id": cur.lastrowid}), 201
 
 
+@app.delete("/api/courses/<int:course_id>")
+@login_required
+def delete_course(course_id):
+    db = get_db()
+    db.execute("DELETE FROM courses WHERE id = ?", (course_id,))
+    db.commit()
+    return jsonify({"ok": True})
+
+
 # ---------- rounds ----------
 
 @app.get("/api/rounds")

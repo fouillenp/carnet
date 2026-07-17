@@ -332,7 +332,7 @@
       </div>
       <div class="table-wrap">
         <table id="courses-table">
-          <thead><tr><th>Nom</th><th>Trous</th><th>Par total</th></tr></thead>
+          <thead><tr><th>Nom</th><th>Trous</th><th>Par total</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -418,8 +418,18 @@
     state.courses = await api("/api/courses");
     const tbody = document.querySelector("#courses-table tbody");
     tbody.innerHTML = state.courses
-      .map((c) => `<tr><td>${escapeHtml(c.name)}</td><td>${c.holes_count}</td><td>${c.pars.reduce((a, b) => a + b, 0)}</td></tr>`)
+      .map(
+        (c) =>
+          `<tr><td>${escapeHtml(c.name)}</td><td>${c.holes_count}</td><td>${c.pars.reduce((a, b) => a + b, 0)}</td><td><button class="btn btn-ghost btn-sm" onclick="deleteCourse(${c.id})">Suppr.</button></td></tr>`
+      )
       .join("");
+  }
+
+  async function deleteCourse(id) {
+    if (!confirm("Supprimer ce parcours ? Les parties liées seront aussi supprimées.")) return;
+    await api("/api/courses/" + id, { method: "DELETE" });
+    await loadCourses();
+    await refreshCourseSelect();
   }
 
   async function refreshCourseSelect() {
