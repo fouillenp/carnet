@@ -254,7 +254,11 @@
           <div class="row">
             <div class="field">
               <label for="round-course">Parcours</label>
-              <select id="round-course"></select>
+              <select id="round-course" onchange="onRoundCourseChange()"></select>
+            </div>
+            <div class="field">
+              <label for="round-tee">Départ</label>
+              <select id="round-tee"></select>
             </div>
             <div class="field">
               <label for="round-date">Date</label>
@@ -311,28 +315,36 @@
     <!-- COURSES -->
     <section class="view" id="view-courses">
       <h2>Parcours</h2>
-      <p class="lede">Enregistre un parcours avec le par de chaque trou.</p>
+      <p class="lede">Enregistre la carte de score complète : par, index et distance par départ, trou par trou.</p>
       <div class="card">
-        <div class="field">
-          <label for="course-name">Nom du parcours</label>
-          <input id="course-name" type="text" placeholder="Ex. Golf de..." />
+        <div class="row">
+          <div class="field">
+            <label for="course-name">Nom du parcours</label>
+            <input id="course-name" type="text" placeholder="Ex. Golf de..." />
+          </div>
+          <div class="field">
+            <label for="course-holes">Nombre de trous</label>
+            <select id="course-holes" onchange="renderScorecardTable()">
+              <option value="9">9</option>
+              <option value="18" selected>18</option>
+            </select>
+          </div>
         </div>
         <div class="field">
-          <label for="course-holes">Nombre de trous</label>
-          <select id="course-holes" onchange="renderParInputs()">
-            <option value="9">9</option>
-            <option value="18" selected>18</option>
-          </select>
+          <label for="course-tees">Départs (séparés par une virgule)</label>
+          <input id="course-tees" type="text" placeholder="Blanc, Jaune, Rouge" value="Blanc, Jaune, Rouge" oninput="renderScorecardTable()" />
         </div>
         <div class="field">
-          <label>Par par trou</label>
-          <div id="par-inputs" class="row" style="flex-wrap:wrap;"></div>
+          <label>Carte de score</label>
+          <div class="table-wrap">
+            <table id="scorecard-table"><thead></thead><tbody></tbody></table>
+          </div>
         </div>
         <button class="btn btn-primary" onclick="createCourse()">Enregistrer le parcours</button>
       </div>
       <div class="table-wrap">
         <table id="courses-table">
-          <thead><tr><th>Nom</th><th>Trous</th><th>Par total</th><th></th></tr></thead>
+          <thead><tr><th>Nom</th><th>Trous</th><th>Par total</th><th>Départs</th><th></th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -390,25 +402,64 @@
   });
 
   // ---- courses ----
-  function renderParInputs() {
+  function currentTeeNames() {
+    return document
+      .getElementById("course-tees")
+      .value.split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+
+  function renderScorecardTable() {
     const n = parseInt(document.getElementById("course-holes").value, 10);
-    const wrap = document.getElementById("par-inputs");
-    wrap.innerHTML = "";
+    const tees = currentTeeNames();
+    const thead = document.querySelector("#scorecard-table thead");
+    const tbody = document.querySelector("#scorecard-table tbody");
+
+    thead.innerHTML =
+      "<tr><th>Trou</th><th>Par</th><th>Index</th>" + tees.map((t) => `<th>${escapeHtml(t)} (m)</th>`).join("") + "</tr>";
+
+    const rows = [];
     for (let i = 1; i <= n; i++) {
-      const d = document.createElement("div");
-      d.style.flex = "0 0 60px";
-      d.innerHTML = `<label style="font-size:0.7rem;">T${i}</label><input type="number" min="3" max="6" value="4" id="par-${i}" style="width:100%; padding:6px; border-radius:6px; border:1px solid var(--card-border); background:var(--bg); color:var(--text);">`;
-      wrap.appendChild(d);
+      const prevPar = document.getElementById("sc-par-" + i)?.value ?? 4;
+      const prevIdx = document.getElementById("sc-idx-" + i)?.value ?? i;
+      const teeCells = tees
+        .map((t, ti) => {
+          const prevVal = document.getElementById(`sc-dist-${ti}-${i}`)?.value ?? "";
+          return `<td><input type="number" min="0" id="sc-dist-${ti}-${i}" value="${prevVal}" style="width:80px;"></td>`;
+        })
+        .join("");
+      rows.push(
+        `<tr><td class="mono">${i}</td>
+          <td><input type="number" min="3" max="6" id="sc-par-${i}" value="${prevPar}" style="width:56px;"></td>
+          <td><input type="number" min="1" max="18" id="sc-idx-${i}" value="${prevIdx}" style="width:56px;"></td>
+          ${teeCells}</tr>`
+      );
     }
+    tbody.innerHTML = rows.join("");
   }
 
   async function createCourse() {
     const name = document.getElementById("course-name").value.trim();
     const n = parseInt(document.getElementById("course-holes").value, 10);
+    const tees = currentTeeNames();
     if (!name) return alert("Nom du parcours requis");
-    const pars = [];
-    for (let i = 1; i <= n; i++) pars.push(parseInt(document.getElementById("par-" + i).value, 10) || 4);
-    await api("/api/courses", { method: "POST", body: JSON.stringify({ name, pars }) });
+
+    const holes = [];
+    const distances = {};
+    tees.forEach((t) => (distances[t] = []));
+    for (let i = 1; i <= n; i++) {
+      holes.push({
+        par: parseInt(document.getElementById("sc-par-" + i).value, 10) || 4,
+        index: parseInt(document.getElementById("sc-idx-" + i).value, 10) || null,
+      });
+      tees.forEach((t, ti) => {
+        const v = document.getElementById(`sc-dist-${ti}-${i}`).value;
+        distances[t].push(v ? parseInt(v, 10) : null);
+      });
+    }
+
+    await api("/api/courses", { method: "POST", body: JSON.stringify({ name, holes, tees, distances }) });
     document.getElementById("course-name").value = "";
     await loadCourses();
     await refreshCourseSelect();
@@ -420,7 +471,7 @@
     tbody.innerHTML = state.courses
       .map(
         (c) =>
-          `<tr><td>${escapeHtml(c.name)}</td><td>${c.holes_count}</td><td>${c.pars.reduce((a, b) => a + b, 0)}</td><td><button class="btn btn-ghost btn-sm" onclick="deleteCourse(${c.id})">Suppr.</button></td></tr>`
+          `<tr><td>${escapeHtml(c.name)}</td><td>${c.holes_count}</td><td>${c.total_par}</td><td>${c.tees.map(escapeHtml).join(", ")}</td><td><button class="btn btn-ghost btn-sm" onclick="deleteCourse(${c.id})">Suppr.</button></td></tr>`
       )
       .join("");
   }
@@ -437,14 +488,32 @@
     const sel = document.getElementById("round-course");
     sel.innerHTML = state.courses.map((c) => `<option value="${c.id}">${escapeHtml(c.name)} (${c.holes_count} trous)</option>`).join("");
     document.getElementById("no-course-hint").style.display = state.courses.length ? "none" : "block";
+    if (state.courses.length) await onRoundCourseChange();
+  }
+
+  async function onRoundCourseChange() {
+    const courseId = document.getElementById("round-course").value;
+    const teeSel = document.getElementById("round-tee");
+    if (!courseId) {
+      teeSel.innerHTML = "";
+      return;
+    }
+    const detail = await api("/api/courses/" + courseId);
+    teeSel.innerHTML = detail.tees.length
+      ? detail.tees.map((t) => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("")
+      : `<option value="">(aucun départ enregistré)</option>`;
   }
 
   // ---- play ----
   async function startRound() {
     const courseId = document.getElementById("round-course").value;
     if (!courseId) return;
+    const teeId = document.getElementById("round-tee").value || null;
     const date = document.getElementById("round-date").value || new Date().toISOString().slice(0, 10);
-    const { id } = await api("/api/rounds", { method: "POST", body: JSON.stringify({ course_id: courseId, played_on: date }) });
+    const { id } = await api("/api/rounds", {
+      method: "POST",
+      body: JSON.stringify({ course_id: courseId, tee_id: teeId, played_on: date }),
+    });
     await openRound(id);
   }
 
@@ -461,19 +530,21 @@
   function renderHoles() {
     const round = state.activeRound;
     const existing = {};
-    (round.holes || []).forEach((h) => (existing[h.hole_number] = h));
+    (round.entries || []).forEach((h) => (existing[h.hole_number] = h));
     const container = document.getElementById("holes-container");
     container.innerHTML = "";
     for (let i = 1; i <= round.holes_count; i++) {
-      const par = round.pars[i - 1];
+      const holeInfo = round.holes[i - 1] || { par: 4, hole_index: null };
+      const par = holeInfo.par;
+      const refDistance = round.tee_distances ? round.tee_distances[i] : null;
       const h = existing[i] || { par, score: par, putts: "", drive_distance: "", remaining_distance: "", bunker: 0, approach: 0, putt_sur_green: 0 };
       const row = document.createElement("div");
       row.className = "hole-row";
       row.innerHTML = `
-        <div class="hole-num">${i}<div style="font-size:0.65rem; color:var(--text-soft); font-weight:400;">par ${par}</div></div>
+        <div class="hole-num">${i}<div style="font-size:0.65rem; color:var(--text-soft); font-weight:400;">par ${par}${holeInfo.hole_index ? " · idx " + holeInfo.hole_index : ""}${refDistance ? " · " + refDistance + "m" : ""}</div></div>
         <input type="number" min="1" value="${h.score}" id="score-${i}">
         <input type="number" min="0" value="${h.putts ?? ""}" id="putts-${i}">
-        <input type="number" min="0" value="${h.drive_distance ?? ""}" id="drive-${i}">
+        <input type="number" min="0" value="${h.drive_distance ?? ""}" id="drive-${i}" data-ref="${refDistance ?? ""}">
         <input type="number" min="0" value="${h.remaining_distance ?? ""}" id="remain-${i}">
         <div class="hole-toggles">
           <button type="button" class="toggle-chip bunker ${h.bunker ? "on" : ""}" data-hole="${i}" data-field="bunker" onclick="toggleChip(this)">Bunker</button>
@@ -482,7 +553,16 @@
         </div>
       `;
       container.appendChild(row);
-      ["score", "putts", "drive", "remain"].forEach((f) => {
+      document.getElementById("drive-" + i).addEventListener("change", () => {
+        const driveEl = document.getElementById("drive-" + i);
+        const ref = driveEl.dataset.ref ? parseInt(driveEl.dataset.ref, 10) : null;
+        const driveVal = driveEl.value ? parseInt(driveEl.value, 10) : null;
+        if (ref != null && driveVal != null) {
+          document.getElementById("remain-" + i).value = Math.max(0, ref - driveVal);
+        }
+        saveHole(i);
+      });
+      ["score", "putts", "remain"].forEach((f) => {
         document.getElementById(f + "-" + i).addEventListener("change", () => saveHole(i));
       });
     }
@@ -494,7 +574,7 @@
   }
 
   async function saveHole(i) {
-    const par = state.activeRound.pars[i - 1];
+    const par = state.activeRound.holes[i - 1].par;
     const body = {
       par,
       score: parseInt(document.getElementById("score-" + i).value, 10) || par,
@@ -637,7 +717,7 @@
   }
 
   async function boot() {
-    renderParInputs();
+    renderScorecardTable();
     document.getElementById("round-date").value = new Date().toISOString().slice(0, 10);
     await loadCourses();
     await refreshCourseSelect();

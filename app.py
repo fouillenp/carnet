@@ -29,22 +29,59 @@ def close_db(exception=None):
         db.close()
 
 
+def _table_columns(db, table):
+    return [r[1] for r in db.execute(f"PRAGMA table_info({table})").fetchall()]
+
+
 def init_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     db = sqlite3.connect(DB_PATH)
+
+    # migration douce depuis l'ancien schéma courses(pars) — table vide en pratique
+    existing_tables = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+    if "courses" in existing_tables and "pars" in _table_columns(db, "courses"):
+        if db.execute("SELECT COUNT(*) FROM courses").fetchone()[0] == 0:
+            db.executescript("DROP TABLE IF EXISTS courses; DROP TABLE IF EXISTS rounds; DROP TABLE IF EXISTS hole_entries;")
+
     db.executescript(
         """
         CREATE TABLE IF NOT EXISTS courses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
             holes_count INTEGER NOT NULL,
-            pars TEXT NOT NULL,
             created_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS course_holes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+            hole_number INTEGER NOT NULL,
+            par INTEGER NOT NULL,
+            hole_index INTEGER,
+            UNIQUE(course_id, hole_number)
+        );
+
+        CREATE TABLE IF NOT EXISTS course_tees (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            sort_order INTEGER NOT NULL DEFAULT 0,
+            UNIQUE(course_id, name)
+        );
+
+        CREATE TABLE IF NOT EXISTS course_tee_distances (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+            tee_id INTEGER NOT NULL REFERENCES course_tees(id) ON DELETE CASCADE,
+            hole_number INTEGER NOT NULL,
+            distance INTEGER NOT NULL,
+            UNIQUE(tee_id, hole_number)
         );
 
         CREATE TABLE IF NOT EXISTS rounds (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             course_id INTEGER NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+            tee_id INTEGER REFERENCES course_tees(id) ON DELETE SET NULL,
             played_on TEXT NOT NULL,
             notes TEXT,
             created_at TEXT NOT NULL
@@ -66,6 +103,10 @@ def init_db():
         );
         """
     )
+
+    if "rounds" in existing_tables and "tee_id" not in _table_columns(db, "rounds"):
+        db.execute("ALTER TABLE rounds ADD COLUMN tee_id INTEGER REFERENCES course_tees(id) ON DELETE SET NULL")
+
     db.commit()
     db.close()
 
@@ -109,8 +150,23 @@ def check_session():
 @login_required
 def list_courses():
     db = get_db()
-    rows = db.execute("SELECT * FROM courses ORDER BY name").fetchall()
-    return jsonify([dict(r, pars=[int(p) for p in r["pars"].split(",")]) for r in rows])
+    rows = db.execute(
+        """
+        SELECT c.*, COALESCE(SUM(h.par), 0) AS total_par,
+               (SELECT GROUP_CONCAT(name, ',') FROM course_tees WHERE course_id = c.id) AS tee_names
+        FROM courses c
+        LEFT JOIN course_holes h ON h.course_id = c.id
+        GROUP BY c.id
+        ORDER BY c.name
+        """
+    ).fetchall()
+    result = []
+    for r in rows:
+        d = dict(r)
+        d["tees"] = d["tee_names"].split(",") if d["tee_names"] else []
+        del d["tee_names"]
+        result.append(d)
+    return jsonify(result)
 
 
 @app.post("/api/courses")
@@ -118,16 +174,76 @@ def list_courses():
 def create_course():
     data = request.get_json(force=True)
     name = (data.get("name") or "").strip()
-    pars = data.get("pars") or []
-    if not name or not pars:
-        return jsonify({"error": "name_and_pars_required"}), 400
+    holes = data.get("holes") or []
+    tees = data.get("tees") or []
+    distances = data.get("distances") or {}
+    if not name or not holes:
+        return jsonify({"error": "name_and_holes_required"}), 400
+
     db = get_db()
     cur = db.execute(
-        "INSERT INTO courses (name, holes_count, pars, created_at) VALUES (?, ?, ?, ?)",
-        (name, len(pars), ",".join(str(int(p)) for p in pars), datetime.utcnow().isoformat()),
+        "INSERT INTO courses (name, holes_count, created_at) VALUES (?, ?, ?)",
+        (name, len(holes), datetime.utcnow().isoformat()),
     )
+    course_id = cur.lastrowid
+
+    for i, h in enumerate(holes, start=1):
+        db.execute(
+            "INSERT INTO course_holes (course_id, hole_number, par, hole_index) VALUES (?, ?, ?, ?)",
+            (course_id, i, int(h.get("par", 4)), h.get("index")),
+        )
+
+    tee_ids = {}
+    for order, tee_name in enumerate(tees):
+        tcur = db.execute(
+            "INSERT INTO course_tees (course_id, name, sort_order) VALUES (?, ?, ?)",
+            (course_id, tee_name, order),
+        )
+        tee_ids[tee_name] = tcur.lastrowid
+
+    for tee_name, dist_list in distances.items():
+        tee_id = tee_ids.get(tee_name)
+        if not tee_id:
+            continue
+        for i, d in enumerate(dist_list, start=1):
+            if d in (None, ""):
+                continue
+            db.execute(
+                "INSERT INTO course_tee_distances (course_id, tee_id, hole_number, distance) VALUES (?, ?, ?, ?)",
+                (course_id, tee_id, i, int(d)),
+            )
+
     db.commit()
-    return jsonify({"id": cur.lastrowid}), 201
+    return jsonify({"id": course_id}), 201
+
+
+@app.get("/api/courses/<int:course_id>")
+@login_required
+def get_course(course_id):
+    db = get_db()
+    course = db.execute("SELECT * FROM courses WHERE id = ?", (course_id,)).fetchone()
+    if not course:
+        return jsonify({"error": "not_found"}), 404
+    holes = db.execute(
+        "SELECT hole_number, par, hole_index FROM course_holes WHERE course_id = ? ORDER BY hole_number", (course_id,)
+    ).fetchall()
+    tees = db.execute(
+        "SELECT id, name FROM course_tees WHERE course_id = ? ORDER BY sort_order", (course_id,)
+    ).fetchall()
+    distances = {}
+    for t in tees:
+        rows = db.execute(
+            "SELECT hole_number, distance FROM course_tee_distances WHERE tee_id = ? ORDER BY hole_number", (t["id"],)
+        ).fetchall()
+        distances[t["id"]] = {row["hole_number"]: row["distance"] for row in rows}
+    return jsonify(
+        {
+            **dict(course),
+            "holes": [dict(h) for h in holes],
+            "tees": [dict(t) for t in tees],
+            "distances": distances,
+        }
+    )
 
 
 @app.delete("/api/courses/<int:course_id>")
@@ -149,6 +265,7 @@ def list_rounds():
         """
         SELECT r.*, c.name AS course_name, c.holes_count,
                (SELECT COALESCE(SUM(score), 0) FROM hole_entries WHERE round_id = r.id) AS total_score,
+               (SELECT COALESCE(SUM(par), 0) FROM hole_entries WHERE round_id = r.id) AS total_par,
                (SELECT COUNT(*) FROM hole_entries WHERE round_id = r.id) AS holes_played
         FROM rounds r
         JOIN courses c ON c.id = r.course_id
@@ -168,8 +285,8 @@ def create_round():
         return jsonify({"error": "course_id_required"}), 400
     db = get_db()
     cur = db.execute(
-        "INSERT INTO rounds (course_id, played_on, notes, created_at) VALUES (?, ?, ?, ?)",
-        (course_id, played_on, data.get("notes"), datetime.utcnow().isoformat()),
+        "INSERT INTO rounds (course_id, tee_id, played_on, notes, created_at) VALUES (?, ?, ?, ?, ?)",
+        (course_id, data.get("tee_id"), played_on, data.get("notes"), datetime.utcnow().isoformat()),
     )
     db.commit()
     return jsonify({"id": cur.lastrowid}), 201
@@ -181,7 +298,7 @@ def get_round(round_id):
     db = get_db()
     r = db.execute(
         """
-        SELECT r.*, c.name AS course_name, c.holes_count, c.pars
+        SELECT r.*, c.name AS course_name, c.holes_count
         FROM rounds r JOIN courses c ON c.id = r.course_id
         WHERE r.id = ?
         """,
@@ -189,11 +306,27 @@ def get_round(round_id):
     ).fetchone()
     if not r:
         return jsonify({"error": "not_found"}), 404
+
     holes = db.execute(
+        "SELECT hole_number, par, hole_index FROM course_holes WHERE course_id = ? ORDER BY hole_number",
+        (r["course_id"],),
+    ).fetchall()
+
+    tee_distances = {}
+    if r["tee_id"]:
+        rows = db.execute(
+            "SELECT hole_number, distance FROM course_tee_distances WHERE tee_id = ?", (r["tee_id"],)
+        ).fetchall()
+        tee_distances = {row["hole_number"]: row["distance"] for row in rows}
+
+    entries = db.execute(
         "SELECT * FROM hole_entries WHERE round_id = ? ORDER BY hole_number", (round_id,)
     ).fetchall()
-    result = dict(r, pars=[int(p) for p in r["pars"].split(",")])
+
+    result = dict(r)
     result["holes"] = [dict(h) for h in holes]
+    result["tee_distances"] = tee_distances
+    result["entries"] = [dict(e) for e in entries]
     return jsonify(result)
 
 
