@@ -36,12 +36,30 @@ def _table_columns(db, table):
 def init_db():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     db = sqlite3.connect(DB_PATH)
+    db.row_factory = sqlite3.Row
 
-    # migration douce depuis l'ancien schéma courses(pars) — table vide en pratique
+    # migration depuis l'ancien schéma courses(pars) : préserve les données existantes
+    # (parcours + parties déjà créés par l'utilisateur) en les convertissant vers course_holes.
     existing_tables = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+    legacy_courses = None
     if "courses" in existing_tables and "pars" in _table_columns(db, "courses"):
-        if db.execute("SELECT COUNT(*) FROM courses").fetchone()[0] == 0:
-            db.executescript("DROP TABLE IF EXISTS courses; DROP TABLE IF EXISTS rounds; DROP TABLE IF EXISTS hole_entries;")
+        legacy_courses = db.execute("SELECT id, name, holes_count, created_at, pars FROM courses").fetchall()
+        db.execute("PRAGMA foreign_keys = OFF")
+        db.executescript(
+            """
+            CREATE TABLE courses_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                holes_count INTEGER NOT NULL,
+                created_at TEXT NOT NULL
+            );
+            INSERT INTO courses_new (id, name, holes_count, created_at)
+                SELECT id, name, holes_count, created_at FROM courses;
+            DROP TABLE courses;
+            ALTER TABLE courses_new RENAME TO courses;
+            """
+        )
+        db.commit()
 
     db.executescript(
         """
@@ -106,6 +124,17 @@ def init_db():
 
     if "rounds" in existing_tables and "tee_id" not in _table_columns(db, "rounds"):
         db.execute("ALTER TABLE rounds ADD COLUMN tee_id INTEGER REFERENCES course_tees(id) ON DELETE SET NULL")
+
+    if legacy_courses:
+        for row in legacy_courses:
+            pars = [int(p) for p in row["pars"].split(",") if p.strip()]
+            for i, par in enumerate(pars, start=1):
+                db.execute(
+                    "INSERT OR IGNORE INTO course_holes (course_id, hole_number, par, hole_index) VALUES (?, ?, ?, NULL)",
+                    (row["id"], i, par),
+                )
+        db.commit()
+        db.execute("PRAGMA foreign_keys = ON")
 
     db.commit()
     db.close()
